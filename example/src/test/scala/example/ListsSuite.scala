@@ -115,14 +115,28 @@ test("intNotZero throws an exception if its argument is 0") {
    * however it is recommended to write an individual `test` statement for
    * every tested aspect of a method.
    */
-test("sum of a few numbers") {
+  test("sum of a few numbers") {
 
-    assert(sum(List(1,2,0)) === 3)
-  }
-test("max of a few numbers") {
-
-    assert(max(List(3, 7, 2)) === 7)
+      assert(sum(List(1,2,0)) === 3)
   }
 
+  test("throw NoSuchElementException on sum with empty List") {
+
+    intercept[NoSuchElementException] {
+      sum(Nil)
+    }
+  }
+
+  test("max of a few numbers") {
+
+      assert(max(List(3, 7, 2)) === 7)
+    }
+
+  test("throw NoSuchElementException when passing max an empty List"){
+
+    intercept[NoSuchElementException] {
+      max(Nil)
+    }
+  }
 
 }

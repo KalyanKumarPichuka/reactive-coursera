@@ -1,5 +1,7 @@
 package example
 
+import java.util.NoSuchElementException
+
 import common._
 
 object Lists {
@@ -24,7 +26,10 @@ object Lists {
    * @param xs A list of natural numbers
    * @return The sum of all elements in `xs`
    */
-def sum(xs: List[Int]): Int = xs.reduce(_ + _)
+def sum(xs: List[Int]): Int =
+    if (xs.isEmpty)
+      throw new NoSuchElementException
+    else xs.reduce(_ + _)
 
 
   /**
@@ -41,7 +46,8 @@ def sum(xs: List[Int]): Int = xs.reduce(_ + _)
    * @throws java.util.NoSuchElementException if `xs` is an empty list
    */
 def max(xs: List[Int]): Int =
-  if(xs.isEmpty) throw new NoSuchElementException
+  if(xs.isEmpty)
+    throw new NoSuchElementException
   else xs.max
 
 }
