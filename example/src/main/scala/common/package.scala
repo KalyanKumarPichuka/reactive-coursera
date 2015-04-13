@@ -1,36 +1,40 @@
-
-import java.util.concurrent._
-import scala.util.DynamicVariable
+import java.io.File
 
 package object common {
 
-  val forkJoinPool = new ForkJoinPool
+  /** An alias for the `Nothing` type.
+   *  Denotes that the type should be filled in.
+   */
+  type ??? = Nothing
 
-  abstract class TaskScheduler {
-    def schedule[T](body: =>T): ForkJoinTask[T]
+  /** An alias for the `Any` type.
+   *  Denotes that the type should be filled in.
+   */
+  type *** = Any
+
+  
+  /**
+   * Get a child of a file. For example,
+   * 
+   *   subFile(homeDir, "b", "c")
+   * 
+   * corresponds to ~/b/c
+   */
+  def subFile(file: File, children: String*) = {
+    children.foldLeft(file)((file, child) => new File(file, child))
   }
 
-  class DefaultTaskScheduler extends TaskScheduler {
-    def schedule[T](body: =>T): ForkJoinTask[T] = {
-      val t = new RecursiveTask[T] {
-        def compute = body
-      }
-      forkJoinPool.execute(t)
-      t
-    }
+  /**
+   * Get a resource from the `src/main/resources` directory. Eclipse does not copy
+   * resources to the output directory, then the class loader cannot find them.
+   */
+  def resourceAsStreamFromSrc(resourcePath: List[String]): Option[java.io.InputStream] = {
+    val classesDir = new File(getClass.getResource(".").toURI)
+    val projectDir = classesDir.getParentFile.getParentFile.getParentFile.getParentFile
+    val resourceFile = subFile(projectDir, ("src" :: "main" :: "resources" :: resourcePath): _*)
+    if (resourceFile.exists)
+      Some(new java.io.FileInputStream(resourceFile))
+    else
+      None
   }
-
-  val scheduler =
-    new DynamicVariable[TaskScheduler](new DefaultTaskScheduler)
-
-  def task[T](body: =>T): ForkJoinTask[T] = {
-    scheduler.value.schedule(body)
-  }
-
-  def parallel[A, B](taskA: => A, taskB: => B): (A, B) = {
-    val right = task { taskB }
-    val left = taskA
-    (left, right.join())
-  }
-
 }

@@ -19,13 +19,12 @@ import org.scalatest.junit.JUnitRunner
  * inside eclipse using the built-in JUnit test runner.
  *
  * You have two options for running this test suite:
- *
+ * 
  * - Start the sbt console and run the "test" command
  * - Right-click this file in eclipse and chose "Run As" - "JUnit Test"
  */
 @RunWith(classOf[JUnitRunner])
 class ListsSuite extends FunSuite {
-
   /**
    * Tests are written using the `test` operator which takes two arguments:
    *
@@ -37,8 +36,7 @@ class ListsSuite extends FunSuite {
    * which tests that its argument evaluates to `true`. So one of the simplest
    * successful tests is the following:
    */
-test("one plus one is two")(assert(1 + 1 == 2))
-
+  test("one plus one is two")(assert(1 + 1 == 2))
 
   /**
    * In Scala, it is allowed to pass an argument to a method using the block
@@ -46,10 +44,9 @@ test("one plus one is two")(assert(1 + 1 == 2))
    *
    * This allows tests to be written in a more readable manner:
    */
-test("one plus one is three?") {
+  test("one plus one is three?") {
     assert(1 + 1 != 3) // This assertion fails! Go ahead and fix it.
   }
-
 
   /**
    * One problem with the previous (failing) test is that ScalaTest will
@@ -71,10 +68,9 @@ test("one plus one is three?") {
    *
    * We recommend to always use the `===` equality operator when writing tests.
    */
-test("details why one plus one is not three") {
+  test("details why one plus one is not three") {
     assert(1 + 1 === 2) // Fix me, please!
   }
-
 
   /**
    * In order to test the exceptional behavior of a methods, ScalaTest offers
@@ -83,8 +79,7 @@ test("details why one plus one is not three") {
    * In the following example, we test the fact that the method `intNotZero`
    * throws an `IllegalArgumentException` if its argument is `0`.
    */
-test("intNotZero throws an exception if its argument is 0") {
-
+  test("intNotZero throws an exception if its argument is 0") {
     intercept[IllegalArgumentException] {
       intNotZero(0)
     }
@@ -100,9 +95,9 @@ test("intNotZero throws an exception if its argument is 0") {
    * Now we finally write some tests for the list functions that have to be
    * implemented for this assignment. We fist import all members of the
    * `List` object.
-   */
+   */ 
   import Lists._
-
+  
 
   /**
    * We only provide two very basic tests for you. Write more tests to make
@@ -117,7 +112,7 @@ test("intNotZero throws an exception if its argument is 0") {
    */
   test("sum of a few numbers") {
 
-      assert(sum(List(1,2,0)) === 3)
+    assert(sum(List(1,2,0)) === 3)
   }
 
   test("throw NoSuchElementException on sum with empty List") {
@@ -129,8 +124,8 @@ test("intNotZero throws an exception if its argument is 0") {
 
   test("max of a few numbers") {
 
-      assert(max(List(3, 7, 2)) === 7)
-    }
+    assert(max(List(3, 7, 2)) === 7)
+  }
 
   test("throw NoSuchElementException when passing max an empty List"){
 

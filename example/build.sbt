@@ -2,60 +2,76 @@ submitProjectName := "example"
 
 scalaVersion := "2.11.5"
 
-scalacOptions ++= Seq(
-  "-deprecation",
-  "-unchecked",
-  "-optimise",
-  "-Yinline-warnings"
-)
-
-javaOptions in run += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+scalacOptions ++= Seq("-deprecation", "-feature")
 
 (fork in Test) := false
 
-fork := true
-
-// See documentation in ProgFunBuild.scala
 projectDetailsMap := {
-  val depsCollections = Seq(
-    "com.storm-enroute" %% "scalameter-core" % "0.6",
-    "com.github.scala-blitz" %% "scala-blitz" % "1.1",
-    "com.storm-enroute" %% "scalameter" % "0.6" % "test"
+  val currentCourseId = "reactive-002"
+
+  val depsNode = Seq(
+    "com.netflix.rxjava" % "rxjava-scala" % "0.15.0",
+    "org.json4s" %% "json4s-native" % "3.2.11",
+    "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
+    "net.databinder.dispatch" %% "dispatch-core" % "0.11.0",
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    "org.slf4j" % "slf4j-api" % "1.7.5",
+    "org.slf4j" % "slf4j-simple" % "1.7.5",
+    "com.squareup.retrofit" % "retrofit" % "1.0.0",
+    "org.scala-lang.modules" %% "scala-async" % "0.9.2"
   )
-  val currentCourseId = "parprog-001"
+
+  val depsAkka = Seq(
+    "com.typesafe.akka" %% "akka-actor" % "2.3.9",
+    "com.typesafe.akka" %% "akka-testkit" % "2.3.9",
+    "com.typesafe.akka" %% "akka-persistence-experimental" % "2.3.9"
+  )
+
   Map(
-    "example"      ->  ProjectDetails(
-                         packageName = "example",
-                         assignmentPartId = "INYXopHA",
-                         maxScore = 10d,
-                         styleScoreRatio = 0.0,
-                         courseId=currentCourseId),
-    "scalashop"    -> ProjectDetails(
-                         packageName = "scalashop",
-                         assignmentPartId = "CCCm3IPa",
-                         maxScore = 10d,
-                         styleScoreRatio = 0.0,
-                         courseId=currentCourseId,
-                         depsCollections),
-    "reductions"   -> ProjectDetails(
-                         packageName = "reductions",
-                         assignmentPartId = "TODO please generate",
-                         maxScore = 10d,
-                         styleScoreRatio = 0.0,
-                         courseId=currentCourseId,
-                         depsCollections),
-    "kmeans"       -> ProjectDetails(
-                         packageName = "kmeans",
-                         assignmentPartId = "TODO please generate",
-                         maxScore = 10d,
-                         styleScoreRatio = 0.0,
-                         courseId=currentCourseId,
-                         depsCollections),
-    "barneshut"    -> ProjectDetails(
-                         packageName = "barneshut",
-                         assignmentPartId = "TODO please generate",
-                         maxScore = 10d,
-                         styleScoreRatio = 0.0,
-                         courseId=currentCourseId,
-                         depsCollections)
+     "example" -> ProjectDetails(
+                    packageName = "example",
+                    assignmentPartId = "fTzFogNl",
+                    maxScore = 10d,
+                    styleScoreRatio = 0.0,
+                    courseId=currentCourseId),
+    "quickcheck" -> ProjectDetails(
+                    packageName = "quickcheck",
+                    assignmentPartId = "02Vi5q7m",
+                    maxScore = 10d,
+                    styleScoreRatio = 0.0,
+                    courseId=currentCourseId,
+                    dependencies = Seq("org.scalacheck" %% "scalacheck" % "1.12.1")),
+    "simulations" -> ProjectDetails(
+                    packageName = "simulations",
+                    assignmentPartId = "pA3TAeu1",
+                    maxScore = 10d,
+                    styleScoreRatio = 0.0,
+                    courseId=currentCourseId),
+    "nodescala" -> ProjectDetails(
+                    packageName = "nodescala",
+                    assignmentPartId = "RvoTAbRy",
+                    maxScore = 10d,
+                    styleScoreRatio = 0.0,
+                    courseId=currentCourseId,
+                    dependencies = depsNode),
+    "suggestions" -> ProjectDetails(
+                    packageName = "suggestions",
+                    assignmentPartId = "rLLdQLGN",
+                    maxScore = 10d,
+                    styleScoreRatio = 0.0,
+                    courseId=currentCourseId),
+    "actorbintree" -> ProjectDetails(
+                    packageName = "actorbintree",
+                    assignmentPartId = "VxIlIKoW",
+                    maxScore = 10d,
+                    styleScoreRatio = 0.0,
+                    courseId=currentCourseId,
+                    dependencies = depsAkka),
+    "kvstore"      -> ProjectDetails(
+                    packageName = "kvstore",
+                    assignmentPartId = "nuvh59Zi",
+                    maxScore = 20d,
+                    styleScoreRatio = 0.0,
+                    courseId=currentCourseId,
+                    dependencies = depsAkka)
 )}
