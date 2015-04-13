@@ -112,14 +112,8 @@ class ListsSuite extends FunSuite {
    */
   test("sum of a few numbers") {
 
+    assert(sum(Nil) === 0)
     assert(sum(List(1,2,0)) === 3)
-  }
-
-  test("throw NoSuchElementException on sum with empty List") {
-
-    intercept[NoSuchElementException] {
-      sum(Nil)
-    }
   }
 
   test("max of a few numbers") {

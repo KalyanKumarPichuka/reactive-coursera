@@ -24,7 +24,7 @@ object Lists {
   * @return The sum of all elements in `xs`
   */
     def sum(xs: List[Int]): Int =
-      if(xs.isEmpty) throw new NoSuchElementException
+      if(xs.isEmpty) 0
       else xs.reduce(_ + _)
   
   /**
