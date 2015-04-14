@@ -24,6 +24,10 @@ object Generators {
   }
 
   val booleans = integers.map(_ >= 0)
+  val desugaredBooleans = for (x <- integers) yield x > 0
+  val defBooleans = new Generator[Boolean]{
+    def generate = integers.generate > 0
+  }
 
   def choose(from: Int, to: Int) = new Generator[Int] {
     def generate = if (from == to) from else scala.util.Random.nextInt(to - from) + from
