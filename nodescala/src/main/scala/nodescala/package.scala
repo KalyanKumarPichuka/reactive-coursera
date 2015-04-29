@@ -35,10 +35,7 @@ package object nodescala {
      *  The values in the list are in the same order as corresponding futures `fs`.
      *  If any of the futures `fs` fails, the resulting future also fails.
      */
-    def all[T](fs: List[Future[T]]): Future[List[T]] = fs match {
-      case Nil => Future(Nil)
-      case f :: fts => f.flatMap(t => all(fts).flatMap(ts => Future(t :: ts)))
-    }
+    def all[T](fs: List[Future[T]]): Future[List[T]] = Future.sequence(fs)
     /** Given a list of futures `fs`, returns the future holding the value of the future from `fs` that completed first.
      *  If the first completing future in `fs` fails, then the result is failed as well.
      *
@@ -48,11 +45,20 @@ package object nodescala {
      *
      *  may return a `Future` succeeded with `1`, `2` or failed with an `Exception`.
      */
-    def any[T](fs: List[Future[T]]): Future[T] = ???
+    def any[T](fs: List[Future[T]]): Future[T] = {
+      val p = Promise[T]()
+      fs foreach {
+        _ onComplete {
+          case Success(x) => p.trySuccess(x)
+          case Failure(e) => p.tryFailure(e)
+        }
+      }
+      p.future
+    }
 
     /** Returns a future with a unit value that is completed after time `t`.
      */
-    def delay(t: Duration): Future[Unit] = ???
+    def delay(t: Duration): Future[Unit] = Future { Await.result(Promise().future, t) }
 
     /** Completes this future with user input.
      */
@@ -80,7 +86,14 @@ package object nodescala {
      *  However, it is also non-deterministic -- it may throw or return a value
      *  depending on the current state of the `Future`.
      */
-    def now: T = ???
+    def now: T = Future {Await.result(f, 0 nanos)}.value match {
+      case None => throw new NoSuchElementException
+      case Some(x) => x match {
+        case Success(t) => t
+        case _ => throw new NoSuchElementException
+      }
+    }
+
 
     /** Continues the computation of this future by taking the current future
      *  and mapping it into another future.
@@ -131,7 +144,7 @@ package object nodescala {
    *  returns a `cancellationToken` which is cancelled by calling `unsubscribe`.
    *
    *  After calling `unsubscribe` once, the associated `cancellationToken` will
-   *  forever remain cancelled -- its `isCancelled` will return `false.
+   *  forever remain cancelled -- its `isCancelled` will return `false`.
    */
   trait CancellationTokenSource extends Subscription {
     def cancellationToken: CancellationToken
