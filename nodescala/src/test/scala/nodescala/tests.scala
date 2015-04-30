@@ -15,6 +15,9 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class NodeScalaSuite extends FunSuite {
 
+  // This is the guy returning Exception inside error terminating Futures
+  private lazy val failed = Failure(throw new Exception)
+
   test("A Future should always be completed") {
     val always = Future.always(517)
 
@@ -28,6 +31,19 @@ class NodeScalaSuite extends FunSuite {
       assert(false)
     } catch {
       case t: TimeoutException => // ok!
+    }
+  }
+
+  test("A future continuesWith success and failure properly") {
+    val x = 42
+    val f = Future{ x * 2 } continueWith(_.map(_ * 2))
+    assert(Await.result(f, 1 second).value.getOrElse(failed) == Success(168))
+    val g = Future{ x / 0} continueWith(_.map(2+))
+    try {
+      Await.result(g, 1 second)
+      assert(false)
+    } catch {
+      case t: ArithmeticException => // we're good
     }
   }
 
