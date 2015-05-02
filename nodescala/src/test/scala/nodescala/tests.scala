@@ -17,6 +17,7 @@ class NodeScalaSuite extends FunSuite {
 
   // This is the guy returning Exception inside error terminating Futures
   private lazy val failed = Failure(throw new Exception)
+  val x = 42
 
   test("A Future should always be completed") {
     val always = Future.always(517)
@@ -35,16 +36,30 @@ class NodeScalaSuite extends FunSuite {
   }
 
   test("A future continuesWith success and failure properly") {
-    val x = 42
     val f = Future{ x * 2 } continueWith(_.map(_ * 2))
-    assert(Await.result(f, 1 second).value.getOrElse(failed) == Success(168))
-    val g = Future{ x / 0} continueWith(_.map(2+))
+    // Happy case
+    assert(Await.result(f, 1 second).value.getOrElse(failed) === Success(168))
+
+    // Failure case
+    val g = Future{ x / 0 } continueWith(_.map(2+))
     try {
       Await.result(g, 1 second)
       assert(false)
     } catch {
       case t: ArithmeticException => // we're good
     }
+  }
+
+  test("A future continues successfully") {
+    val nameAdder =
+      (t: Try[String]) =>
+        t match {
+          case Success(s) => s + " Tom"
+          case _ => failed
+        }
+    val f = Future("My name is") continue nameAdder
+
+    assert(Await.result(f, 1 second) === "My name is Tom")
   }
 
   test("CancellationTokenSource should allow stopping the computation") {
@@ -62,6 +77,22 @@ class NodeScalaSuite extends FunSuite {
 
     cts.unsubscribe()
     assert(Await.result(p.future, 1 second) == "done")
+  }
+
+  test("A future runs programs which are cancellable") {
+    val p = Promise[Unit]()
+    val working = Future.run() { ct =>
+      Future {
+        while (ct.nonCancelled) {
+          // do work
+        }
+        p.success("Finished")
+        assert(Await.result(p.future, 0.5 milliseconds) === "Finished")
+      }
+    }
+    Future.delay(1 second) onSuccess {
+      case _ => working.unsubscribe()
+    }
   }
 
   class DummyExchange(val request: Request) extends Exchange {

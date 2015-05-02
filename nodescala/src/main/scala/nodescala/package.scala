@@ -70,7 +70,11 @@ package object nodescala {
 
     /** Creates a cancellable context for an execution and runs it.
      */
-    def run()(f: CancellationToken => Future[Unit]): Subscription = ???
+    def run()(f: CancellationToken => Future[Unit]): Subscription ={
+      val cts = CancellationTokenSource()
+      f(cts.cancellationToken)
+      cts
+    }
 
   }
 
@@ -109,17 +113,20 @@ package object nodescala {
      *  The function `cont` is called only after the current future completes.
      *  The resulting future contains a value returned by `cont`.
      */
-    def continue[S](cont: Try[T] => S): Future[S] =
-      ???
+    def continue[S](cont: Try[T] => S): Future[S] = theContinue(f, cont)
 
   }
 
   def theContinueWith[T, S](f: Future[T], cont: Future[T] => S): Future[S] =
     async {
-      await{
-        f
-      }
+      await(f)
       cont(f)
+    }
+
+  def theContinue[T, S](f: Future[T], cont: (Try[T]) => S): Future[S] =
+    async{
+      val t = await(f)
+      cont(Try(t))
     }
 
   /** Subscription objects are used to be able to unsubscribe
