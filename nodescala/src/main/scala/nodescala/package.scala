@@ -58,7 +58,11 @@ package object nodescala {
 
     /** Returns a future with a unit value that is completed after time `t`.
      */
-    def delay(t: Duration): Future[Unit] = Future{Future.wait(t.toNanos)}
+    def delay(t: Duration): Future[Unit] = Future {
+      blocking {
+        Await.ready(never, t)
+      }
+    }
 
     /** Completes this future with user input.
      */
@@ -90,12 +94,9 @@ package object nodescala {
      *  However, it is also non-deterministic -- it may throw or return a value
      *  depending on the current state of the `Future`.
      */
-    def now: T = Future {Await.result(f, 0 nanos)}.value match {
+    def now: T = f.value match {
       case None => throw new NoSuchElementException
-      case Some(x) => x match {
-        case Success(t) => t
-        case _ => throw new NoSuchElementException
-      }
+      case Some(x) => x.get
     }
 
 
@@ -119,7 +120,7 @@ package object nodescala {
 
   def theContinueWith[T, S](f: Future[T], cont: Future[T] => S): Future[S] =
     async {
-      await(f)
+      val t = await(f)
       cont(f)
     }
 
