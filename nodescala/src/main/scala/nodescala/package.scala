@@ -58,7 +58,7 @@ package object nodescala {
 
     /** Returns a future with a unit value that is completed after time `t`.
      */
-    def delay(t: Duration): Future[Unit] = Future { Await.result(Promise().future, t) }
+    def delay(t: Duration): Future[Unit] = Future{Future.wait(t.toNanos)}
 
     /** Completes this future with user input.
      */
