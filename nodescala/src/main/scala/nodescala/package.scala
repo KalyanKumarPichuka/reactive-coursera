@@ -60,7 +60,7 @@ package object nodescala {
      */
     def delay(t: Duration): Future[Unit] = Future {
       blocking {
-        Await.ready(never, t)
+        Thread.sleep(t toMillis)
       }
     }
 
