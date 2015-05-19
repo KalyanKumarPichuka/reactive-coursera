@@ -4,6 +4,7 @@
 package actorbintree
 
 import akka.actor._
+import akka.event.LoggingReceive
 import scala.collection.immutable.Queue
 
 object BinaryTreeSet {
@@ -78,7 +79,24 @@ class BinaryTreeSet extends Actor {
     * `newRoot` is the root of the new binary tree where we want to copy
     * all non-removed elements into.
     */
-  def garbageCollecting(newRoot: ActorRef): Receive = ???
+  def garbageCollecting(newRoot: ActorRef): Receive = {
+    case GC => None
+    case op: Operation => pendingQueue = pendingQueue.enqueue(op)
+    case CopyFinished => {
+      // Use PoisonPill to finish
+      root ! PoisonPill
+      root = newRoot
+
+      // Dequeue and attend messages
+      while(!pendingQueue.isEmpty) {
+        val (message, lighterQueue) = pendingQueue.dequeue
+        pendingQueue = lighterQueue
+        root ! message
+      }
+      pendingQueue = Queue.empty[Operation]
+      context.become(normal)
+    }
+  }
 
 }
 
@@ -108,12 +126,12 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
   /** Handles `Operation` messages and `CopyTo` requests. */
   val normal: Receive = {
     // Handle insert for equal, less and greater values
-    case Insert(rq, id, elem) =>
+    case ins @ Insert(rq, id, elem) =>
       this.elem compareTo elem match {
         case n if n == 0 => this.removed = false
         case n if n > 0 => subtrees get Right match {
             // If I get some address, I need to insert the element, that guy must insert the elem
-          case Some(actorRef) => actorRef ! Insert(rq, id, elem)
+          case Some(actorRef) => actorRef ! ins
             // Insert in my subtrees as a tuple (Right, Node#elem)
           case _           =>
             subtrees += Right -> context.actorOf(props(elem, false), s"Node$elem")
@@ -127,14 +145,57 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
       }
       rq ! OperationFinished(id)
       // Handle remove
-    case Remove(rq, id, elem) =>
+    case rm @ Remove(rq, id, elem) =>
+      this.elem compareTo elem match {
+        case n if n == 0 => this.removed = true
+        case n if n > 0  => subtrees get Left match {
+          case Some(actorRef) => actorRef ! rm
+          case _              => sender ! OperationFinished(id)
+        }
+        case _                => subtrees get Right match {
+          case Some(actorRef) => actorRef ! rm
+          case _              => sender ! OperationFinished(id)
+        }
+      }
+    case CopyTo(treeNode) => {
+      if (subtrees.isEmpty && removed) context.parent ! CopyFinished
+      else {
+        val actorRefs = subtrees.values.toSet
+        context.become(copying(actorRefs, removed))
+
+        actorRefs foreach (_ ! CopyTo(treeNode))
+        if (!removed) treeNode ! Insert(self, -1, elem)
+      }
+    }
+    case cont @ Contains(rq, id, elem) =>
+      this.elem compareTo elem match {
+        case n if n == 0 => context.parent ! ContainsResult(id, !removed)
+        case n if n > 0  => subtrees get Left match {
+          case Some(actorRef) => actorRef ! cont
+          case _              => context.parent ! ContainsResult(id, false)
+        }
+        case _                => subtrees get Right match {
+          case Some(actorRef) => actorRef ! cont
+          case _              => context.parent ! ContainsResult(id, false)
+        }
+      }
+    case ContainsResult(id, result) => context.parent ! ContainsResult(id, result)
+    case OperationFinished(id) => context.parent ! OperationFinished(id)
   }
 
   // optional
   /** `expected` is the set of ActorRefs whose replies we are waiting for,
     * `insertConfirmed` tracks whether the copy of this node to the new tree has been confirmed.
     */
-  def copying(expected: Set[ActorRef], insertConfirmed: Boolean): Receive = ???
+  def copying(expected: Set[ActorRef], insertConfirmed: Boolean): Receive = LoggingReceive {
+    case OperationFinished(id) =>
+      if (expected.isEmpty) context.parent ! CopyFinished
+      else context.become(copying(expected, true))
+    case CopyFinished =>
+      val newRefs = expected - sender
+      if (newRefs.isEmpty && insertConfirmed) context.parent ! CopyFinished
+      else context.become(copying(newRefs, insertConfirmed))
+  }
 
 
 }
