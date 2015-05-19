@@ -124,30 +124,31 @@ class BinaryTreeNode(val elem: Int, initiallyRemoved: Boolean) extends Actor {
 
   // optional
   /** Handles `Operation` messages and `CopyTo` requests. */
-  val normal: Receive = {
+  val normal: Receive = LoggingReceive {
     // Handle insert for equal, less and greater values
     case ins @ Insert(rq, id, elem) =>
       this.elem compareTo elem match {
-        case n if n == 0 => this.removed = false
+        case n if n == 0 => this.removed = false; sender ! OperationFinished(id)
         case n if n > 0 => subtrees get Right match {
             // If I get some address, I need to insert the element, that guy must insert the elem
           case Some(actorRef) => actorRef ! ins
             // Insert in my subtrees as a tuple (Right, Node#elem)
           case _           =>
             subtrees += Right -> context.actorOf(props(elem, false), s"Node$elem")
+            if (id < 0) rq ! OperationFinished(id) else context.parent ! OperationFinished(id)
         }
           // this.elem < elem
         case _ => subtrees get Left match {
           case Some(actorRef) => actorRef ! Insert(rq, id, elem)
           case _              =>
             subtrees += Left -> context.actorOf(props(elem, false), s"Node$elem")
+            if (id < 0) rq ! OperationFinished(id) else context.parent ! OperationFinished(id)
         }
       }
-      rq ! OperationFinished(id)
       // Handle remove
     case rm @ Remove(rq, id, elem) =>
       this.elem compareTo elem match {
-        case n if n == 0 => this.removed = true
+        case n if n == 0 => this.removed = true; sender ! OperationFinished(id)
         case n if n > 0  => subtrees get Left match {
           case Some(actorRef) => actorRef ! rm
           case _              => sender ! OperationFinished(id)
